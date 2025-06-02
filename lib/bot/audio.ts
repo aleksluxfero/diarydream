@@ -31,12 +31,8 @@ export async function handleVoiceMessage(ctx: Context) {
 
     // Распознаем речь
     const result = await hf.automaticSpeechRecognition({
-      model: 'openai/whisper-base',
+      model: 'openai/whisper-large-v3-turbo',
       data: audioBlob,
-      parameters: {
-        language: 'ru',
-        task: 'transcribe'
-      }
     })
 
     // Отправляем результат с использованием тега tg-spoiler
