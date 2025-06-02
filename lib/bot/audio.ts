@@ -31,8 +31,13 @@ export async function handleVoiceMessage(ctx: Context) {
 
     // Конвертируем аудио в текст с помощью Whisper
     const result = await client.automaticSpeechRecognition({
-      model: 'openai/whisper-large-v3',
-      data: audioBuffer
+      model: 'antony66/whisper-large-v3-russian',
+      data: audioBuffer,
+      params: {
+        language: 'ru',
+        task: 'transcribe',
+        return_timestamps: false
+      }
     })
 
     // Удаляем сообщение о процессе обработки
