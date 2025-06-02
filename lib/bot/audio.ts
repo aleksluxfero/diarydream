@@ -1,7 +1,7 @@
-import { InferenceClient } from '@huggingface/inference'
+import { HfInference } from '@huggingface/inference'
 import { Context } from 'grammy'
 
-const client = new InferenceClient(process.env.HUGGINGFACE_TOKEN || '')
+const hf = new HfInference(process.env.HUGGINGFACE_TOKEN || '')
 
 export async function handleVoiceMessage(ctx: Context) {
   try {
@@ -27,31 +27,30 @@ export async function handleVoiceMessage(ctx: Context) {
 
     // Скачиваем аудио файл
     const response = await fetch(fileUrl)
-    const audioBuffer = await response.arrayBuffer()
+    const audioBlob = await response.blob()
 
-    // Конвертируем аудио в текст с помощью Whisper
-    const result = await client.automaticSpeechRecognition({
-      model: 'openai/whisper-small',
-      data: audioBuffer,
-      params: {
+    // Распознаем речь
+    const result = await hf.automaticSpeechRecognition({
+      model: 'openai/whisper-base',
+      data: audioBlob,
+      parameters: {
         language: 'ru',
-        task: 'transcribe',
-        return_timestamps: false
+        task: 'transcribe'
       }
     })
 
-    // Удаляем сообщение о процессе обработки
-    await ctx.api.deleteMessage(ctx.chat.id, statusMessage.message_id)
-
-    // Отправляем результат с цитированием исходного сообщения
-    await ctx.reply(`🎯 Текст из аудио:\n<tg-spoiler>${result.text}</tg-spoiler>`, {
+    // Отправляем результат с использованием тега tg-spoiler
+    await ctx.reply(`<tg-spoiler>${result.text}</tg-spoiler>`, {
       reply_to_message_id: ctx.message.message_id,
       parse_mode: 'HTML'
     })
+
+    // Удаляем статусное сообщение
+    await ctx.api.deleteMessage(ctx.chat.id, statusMessage.message_id)
   } catch (error) {
-    console.error('Ошибка при обработке аудио:', error)
+    console.error('Error processing voice message:', error)
     if (ctx.message) {
-      await ctx.reply('Произошла ошибка при обработке голосового сообщения. Попробуйте еще раз.', {
+      await ctx.reply('Произошла ошибка при обработке голосового сообщения', {
         reply_to_message_id: ctx.message.message_id
       })
     }
